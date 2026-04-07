@@ -1,0 +1,109 @@
+<div class="auth-page">
+  <div class="auth-container">
+    <div class="auth-left">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.03 2 10.94c0 2.75 1.35 5.22 3.5 6.86V22l4.22-2.31c1.13.31 2.33.47 3.58.47 5.52 0 10-4.03 10-8.94S17.52 2 12 2z" fill="currentColor"/>
+            <circle cx="8" cy="11" r="1.5" fill="var(--bg-primary)"/>
+            <circle cx="12" cy="11" r="1.5" fill="var(--bg-primary)"/>
+            <circle cx="16" cy="11" r="1.5" fill="var(--bg-primary)"/>
+          </svg>
+        </div>
+        <h1 class="brand-name">ChitChat</h1>
+        <p class="brand-tagline">Join the conversation today</p>
+      </div>
+    </div>
+
+    <div class="auth-right">
+      <div class="auth-form-wrapper">
+        <h2>Create Account</h2>
+        <p class="auth-subtitle">Set up your profile to get started</p>
+
+        <div class="error-message" *ngIf="error">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          {{ error }}
+        </div>
+
+        <form (ngSubmit)="onSubmit()" class="auth-form">
+          <div class="form-group">
+            <label for="username">Username</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+              <input
+                type="text"
+                id="username"
+                [(ngModel)]="username"
+                name="username"
+                placeholder="Choose a username"
+                autocomplete="username"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="Enter your email"
+                autocomplete="email"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="Create a password"
+                autocomplete="new-password"
+                required
+              />
+              <button type="button" class="toggle-password" (click)="togglePassword()">
+                <svg *ngIf="!showPassword" viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                <svg *ngIf="showPassword" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/><path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+              <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="confirmPassword"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary" [disabled]="loading">
+            <span *ngIf="!loading">Create Account</span>
+            <span *ngIf="loading" class="spinner"></span>
+          </button>
+        </form>
+
+        <p class="auth-link">
+          Already have an account? <a routerLink="/login">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

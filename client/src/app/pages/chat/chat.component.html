@@ -1,0 +1,159 @@
+<div class="chat-layout" [class.sidebar-hidden]="!showMobileSidebar">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-visible]="showMobileSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.03 2 10.94c0 2.75 1.35 5.22 3.5 6.86V22l4.22-2.31c1.13.31 2.33.47 3.58.47 5.52 0 10-4.03 10-8.94S17.52 2 12 2z" fill="currentColor"/><circle cx="8" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="12" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="16" cy="11" r="1.5" fill="var(--bg-secondary)"/></svg>
+        </div>
+        <span class="sidebar-title">ChitChat</span>
+      </div>
+      <button class="icon-btn logout-btn" (click)="logout()" title="Logout">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+      <input
+        type="text"
+        placeholder="Search contacts..."
+        [(ngModel)]="searchQuery"
+        (input)="onSearchChange()"
+      />
+    </div>
+
+    <div class="user-info-bar">
+      <div class="user-info-avatar">{{ getUserInitial(currentUser?.username || '') }}</div>
+      <div class="user-info-details">
+        <span class="user-info-name">{{ currentUser?.username }}</span>
+        <span class="user-info-status">Online</span>
+      </div>
+    </div>
+
+    <div class="users-list">
+      <div class="users-section-label">Contacts</div>
+      <div
+        *ngFor="let user of filteredUsers"
+        class="user-item"
+        [class.active]="selectedUser?._id === user._id"
+        (click)="selectUser(user)"
+      >
+        <div class="user-avatar-wrapper">
+          <div class="user-avatar">{{ getUserInitial(user.username) }}</div>
+          <span class="status-dot" [class.online]="isUserOnline(user._id)"></span>
+        </div>
+        <div class="user-details">
+          <span class="user-name">{{ user.username }}</span>
+          <span class="user-status-text">{{ isUserOnline(user._id) ? 'Online' : 'Offline' }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="filteredUsers.length === 0" class="no-users">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+        <p>No contacts found</p>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Chat Area -->
+  <main class="chat-main" [class.mobile-visible]="!showMobileSidebar">
+
+    <!-- No chat selected -->
+    <div *ngIf="!selectedUser" class="no-chat-selected">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.03 2 10.94c0 2.75 1.35 5.22 3.5 6.86V22l4.22-2.31c1.13.31 2.33.47 3.58.47 5.52 0 10-4.03 10-8.94S17.52 2 12 2z" fill="currentColor"/><circle cx="8" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="12" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="16" cy="11" r="1.5" fill="var(--bg-secondary)"/></svg>
+        </div>
+        <h3>Start a Conversation</h3>
+        <p>Pick someone from your contacts to begin chatting</p>
+      </div>
+    </div>
+
+    <!-- Chat selected -->
+    <ng-container *ngIf="selectedUser">
+      <!-- Chat header -->
+      <div class="chat-header">
+        <button class="icon-btn back-btn" (click)="goBackToSidebar()">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+        </button>
+        <div class="chat-header-user">
+          <div class="chat-header-avatar-wrapper">
+            <div class="chat-header-avatar">{{ getUserInitial(selectedUser.username) }}</div>
+            <span class="header-status-dot" [class.online]="isUserOnline(selectedUser._id)"></span>
+          </div>
+          <div class="chat-header-info">
+            <span class="chat-header-name">{{ selectedUser.username }}</span>
+            <span class="chat-header-status" *ngIf="typingUser">typing...</span>
+            <span class="chat-header-status" *ngIf="!typingUser">{{ isUserOnline(selectedUser._id) ? 'Online' : 'Offline' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-area" #messagesContainer>
+        <ng-container *ngFor="let msg of messages; let i = index">
+          <!-- Date Separator -->
+          <div *ngIf="shouldShowDate(i)" class="date-separator">
+            <span>{{ formatDate(msg.createdAt) }}</span>
+          </div>
+
+          <div class="message-row" [class.own]="isOwnMessage(msg)">
+            <div class="message-bubble" [class.own]="isOwnMessage(msg)">
+              <!-- Text message -->
+              <p *ngIf="msg.type === 'text'" class="message-text">{{ msg.content }}</p>
+
+              <!-- Image message -->
+              <div *ngIf="msg.type === 'image'" class="message-image">
+                <img [src]="getFileUrl(msg.fileUrl)" [alt]="msg.fileName" loading="lazy" />
+              </div>
+
+              <!-- File message -->
+              <div *ngIf="msg.type === 'file'" class="message-file">
+                <div class="file-icon">
+                  <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+                </div>
+                <div class="file-details">
+                  <a [href]="getFileUrl(msg.fileUrl)" target="_blank" class="file-name">{{ msg.fileName }}</a>
+                  <span class="file-size">{{ formatFileSize(msg.fileSize) }}</span>
+                </div>
+              </div>
+
+              <span class="message-time">
+                {{ formatTime(msg.createdAt) }}
+                <svg *ngIf="isOwnMessage(msg) && msg.read" class="read-tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              </span>
+            </div>
+          </div>
+        </ng-container>
+
+        <div *ngIf="messages.length === 0" class="no-messages">
+          <p>No messages yet. Say hello!</p>
+        </div>
+      </div>
+
+      <!-- Message Input -->
+      <div class="message-input-area">
+        <input type="file" #fileInput (change)="onFileSelected($event)" hidden />
+        <button class="icon-btn attach-btn" (click)="triggerFileUpload()" [disabled]="uploadingFile" title="Attach file">
+          <svg *ngIf="!uploadingFile" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V5a1 1 0 112 0v6a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"/></svg>
+          <span *ngIf="uploadingFile" class="upload-spinner"></span>
+        </button>
+        <div class="input-wrap">
+          <input
+            type="text"
+            [(ngModel)]="messageText"
+            (input)="onTyping()"
+            (keydown)="onKeyDown($event)"
+            placeholder="Type a message..."
+            autocomplete="off"
+          />
+        </div>
+        <button class="send-btn" (click)="sendMessage()" [disabled]="!messageText.trim()">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
+        </button>
+      </div>
+    </ng-container>
+  </main>
+</div>
