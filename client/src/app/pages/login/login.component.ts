@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -19,7 +19,8 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   togglePassword(): void {
@@ -42,6 +43,7 @@ export class LoginComponent {
       error: (err) => {
         this.loading = false;
         this.error = err.error?.message || 'Login failed. Please try again.';
+        this.cdr.detectChanges();
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -21,7 +21,8 @@ export class RegisterComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   togglePassword(): void {
@@ -63,6 +64,7 @@ export class RegisterComponent {
       error: (err) => {
         this.loading = false;
         this.error = err.error?.message || 'Registration failed. Please try again.';
+        this.cdr.detectChanges();
       }
     });
   }

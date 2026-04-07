@@ -54,9 +54,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   ngOnInit(): void {
     this.currentUser = this.authService.currentUser;
-    this.socketService.connect();
-    this.loadContacts();
-    this.setupSocketListeners();
+    if (this.currentUser) {
+      this.socketService.connect();
+      this.loadContacts();
+      this.setupSocketListeners();
+    }
+  }
+
+  private requireAuth(): boolean {
+    if (!this.authService.isLoggedIn) {
+       this.router.navigate(['/login']);
+       return false;
+    }
+    return true;
   }
 
   ngAfterViewChecked(): void {
@@ -86,6 +96,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   switchTab(tab: 'contacts' | 'search'): void {
+    if (!this.requireAuth()) return;
     this.activeTab = tab;
     this.searchQuery = '';
     
@@ -101,6 +112,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (event) {
       event.stopPropagation();
     }
+    if (!this.requireAuth()) return;
     const wasContact = this.isContact(user._id);
     this.chatService.addOrRemoveContact(user._id).subscribe({
       next: () => {
@@ -250,11 +262,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectUser(user: User): void {
+    if (!this.requireAuth()) return;
     this.selectedUser = user;
     this.messages = [];
     this.typingUser = null;
-    this.showMobileSidebar = false;
-
+    if (window.innerWidth < 768) {
+      this.showMobileSidebar = false;
+    }
+    
     this.chatService.fetchMessages(user._id).subscribe({
       next: (res) => {
         this.ngZone.run(() => {
@@ -305,6 +320,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   sendMessage(): void {
+    if (!this.requireAuth()) return;
     if (!this.messageText.trim() || !this.selectedUser) return;
 
     this.socketService.sendMessage({
@@ -318,6 +334,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onTyping(): void {
+    if (!this.requireAuth()) return;
     if (!this.selectedUser) return;
 
     this.socketService.emitTyping(this.selectedUser._id);
@@ -338,10 +355,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   toggleAttachMenu(): void {
+    if (!this.requireAuth()) return;
     this.showAttachMenu = !this.showAttachMenu;
   }
 
   pickFile(type: 'images' | 'docs' | 'all'): void {
+    if (!this.requireAuth()) return;
     this.showAttachMenu = false;
     if (type === 'images') {
       this.fileInputImages?.nativeElement?.click();
@@ -353,6 +372,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   onFileSelected(event: Event): void {
+    if (!this.requireAuth()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file || !this.selectedUser) return;
@@ -490,7 +510,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   logout(): void {
     this.socketService.disconnect();
     this.authService.logout();
-    this.router.navigate(['/login']);
+    this.currentUser = null;
+    this.contacts = [];
+    this.users = [];
+    this.messages = [];
+    this.selectedUser = null;
+    this.router.navigate(['/chat']);
   }
 
   private scrollToBottom(): void {
