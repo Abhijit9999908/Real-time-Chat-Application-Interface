@@ -17,7 +17,9 @@ import { environment } from '../../../environments/environment';
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
-  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('fileInputImages') fileInputImages!: ElementRef<HTMLInputElement>;
+  @ViewChild('fileInputDocs') fileInputDocs!: ElementRef<HTMLInputElement>;
+  @ViewChild('fileInputAll') fileInputAll!: ElementRef<HTMLInputElement>;
 
   currentUser: User | null = null;
   users: User[] = [];
@@ -33,6 +35,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   showMobileSidebar = true;
   uploadingFile = false;
   uploadProgress = 0;
+  showAttachMenu = false;
   lastSeenMap: { [userId: string]: string } = {};
   connectionState: 'connected' | 'disconnected' | 'reconnecting' = 'disconnected';
 
@@ -334,8 +337,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  triggerFileUpload(): void {
-    this.fileInput?.nativeElement?.click();
+  toggleAttachMenu(): void {
+    this.showAttachMenu = !this.showAttachMenu;
+  }
+
+  pickFile(type: 'images' | 'docs' | 'all'): void {
+    this.showAttachMenu = false;
+    if (type === 'images') {
+      this.fileInputImages?.nativeElement?.click();
+    } else if (type === 'docs') {
+      this.fileInputDocs?.nativeElement?.click();
+    } else {
+      this.fileInputAll?.nativeElement?.click();
+    }
   }
 
   onFileSelected(event: Event): void {

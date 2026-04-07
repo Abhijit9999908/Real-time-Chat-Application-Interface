@@ -152,12 +152,34 @@
 
       <!-- Message Input -->
       <div class="message-input-area">
-        <input type="file" #fileInput (change)="onFileSelected($event)" hidden
-          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" />
-        <button class="icon-btn attach-btn" (click)="triggerFileUpload()" [disabled]="uploadingFile" title="Attach file">
-          <svg *ngIf="!uploadingFile" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V5a1 1 0 112 0v6a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"/></svg>
-          <span *ngIf="uploadingFile" class="upload-spinner"></span>
-        </button>
+        <!-- Hidden file inputs for each type -->
+        <input type="file" #fileInputImages (change)="onFileSelected($event)" hidden accept="image/*,video/*" />
+        <input type="file" #fileInputDocs (change)="onFileSelected($event)" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" />
+        <input type="file" #fileInputAll (change)="onFileSelected($event)" hidden accept="*/*" />
+
+        <!-- Attach button with popup menu -->
+        <div class="attach-wrapper">
+          <button class="icon-btn attach-btn" (click)="toggleAttachMenu()" [disabled]="uploadingFile" title="Attach file">
+            <svg *ngIf="!uploadingFile" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V5a1 1 0 112 0v6a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"/></svg>
+            <span *ngIf="uploadingFile" class="upload-spinner"></span>
+          </button>
+
+          <!-- Attach popup menu -->
+          <div class="attach-menu" *ngIf="showAttachMenu">
+            <button class="attach-menu-item" (click)="pickFile('images')">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
+              <span>Photos & Videos</span>
+            </button>
+            <button class="attach-menu-item" (click)="pickFile('docs')">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
+              <span>Documents</span>
+            </button>
+            <button class="attach-menu-item" (click)="pickFile('all')">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
+              <span>All Files</span>
+            </button>
+          </div>
+        </div>
         <div class="input-wrap">
           <input
             type="text"
