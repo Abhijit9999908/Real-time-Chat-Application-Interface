@@ -6,6 +6,26 @@
   position: relative;
 }
 
+.chat-layout::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+              radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 40%);
+  animation: orbFloat 25s infinite linear;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes orbFloat {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+
 .connection-banner {
   position: absolute;
   top: 0;
@@ -35,19 +55,24 @@
 .sidebar {
   width: 340px;
   min-width: 340px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border);
+  background: rgba(22, 22, 30, 0.65); /* Glassmorphic base */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   flex-direction: column;
   height: 100vh;
+  z-index: 10;
+  box-shadow: 5px 0 30px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-header {
-  padding: 1rem 1.2rem;
+  padding: 1.2rem 1.2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(22, 22, 30, 0.4);
 }
 
 .sidebar-brand {
@@ -343,6 +368,10 @@
   flex-direction: column;
   height: 100vh;
   min-width: 0;
+  background: rgba(15, 15, 20, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 5;
 }
 
 .no-chat-selected {
@@ -386,8 +415,8 @@
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(22, 22, 30, 0.4);
 }
 
 .back-btn {
@@ -485,20 +514,23 @@
 }
 
 .message-bubble {
-  max-width: 65%;
-  padding: 0.6rem 0.85rem;
-  border-radius: 16px 16px 16px 4px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  max-width: 75%;
+  padding: 0.85rem 1rem;
+  border-radius: 18px 18px 18px 4px;
+  background: rgba(42, 42, 56, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   position: relative;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(4px);
 }
 
 .message-bubble.own {
-  background: var(--accent);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(79, 70, 229, 0.95));
   border-color: transparent;
-  border-radius: 16px 16px 4px 16px;
+  border-radius: 18px 18px 4px 18px;
   color: #fff;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
 }
 
 @keyframes fadeIn {
@@ -534,9 +566,10 @@
 }
 
 .read-tick {
-  width: 14px;
-  height: 14px;
-  color: #a5f3fc;
+  width: 15px;
+  height: 15px;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 2px rgba(56, 189, 248, 0.6));
 }
 
 .message-image img {

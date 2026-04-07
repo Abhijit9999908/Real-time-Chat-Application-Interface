@@ -250,6 +250,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       })
     );
 
+    this.subs.push(
+      this.socketService.messagesRead$.subscribe(readBy => {
+        if (!readBy) return;
+        this.ngZone.run(() => {
+          let updated = false;
+          this.messages = this.messages.map(msg => {
+            if (msg.receiver === readBy && !msg.read) {
+              updated = true;
+              return { ...msg, read: true };
+            }
+            return msg;
+          });
+          if (updated) {
+            this.cdr.detectChanges();
+          }
+        });
+      })
+    );
+
     // Track connection state
     this.subs.push(
       this.socketService.connectionState$.subscribe(state => {
