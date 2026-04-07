@@ -1,7 +1,7 @@
 <div class="chat-layout" [class.sidebar-hidden]="!showMobileSidebar">
 
   <!-- Connection State Banner -->
-  <div class="connection-banner" *ngIf="connectionState !== 'connected'" [class.reconnecting]="connectionState === 'reconnecting'">
+  <div class="connection-banner" *ngIf="currentUser && connectionState !== 'connected'" [class.reconnecting]="connectionState === 'reconnecting'">
     <span *ngIf="connectionState === 'disconnected'">⚠ Disconnected — Waiting for network...</span>
     <span *ngIf="connectionState === 'reconnecting'">🔄 Reconnecting...</span>
   </div>

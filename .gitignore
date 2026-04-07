@@ -4,5 +4,5 @@ dist/
 server/uploads/
 server/node_modules/
 client/node_modules/
-client/dist/
+# client/dist/ - NOT ignored, needed for Render deployment
 client/.angular/

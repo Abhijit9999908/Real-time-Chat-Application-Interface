@@ -50,6 +50,17 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve Angular frontend (production build)
+const clientBuildPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
+if (fs.existsSync(clientBuildPath)) {
+  app.use(express.static(clientBuildPath));
+  
+  // SPA catch-all: send index.html for any non-API route
+  app.get(/^\/(?!api\/).*/, (req, res) => {
+    res.sendFile(path.join(clientBuildPath, 'index.html'));
+  });
+}
+
 // Initialize socket handler
 setupSocket(io);
 
