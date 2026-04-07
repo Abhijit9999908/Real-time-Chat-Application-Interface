@@ -1,5 +1,11 @@
 <div class="chat-layout" [class.sidebar-hidden]="!showMobileSidebar">
 
+  <!-- Connection State Banner -->
+  <div class="connection-banner" *ngIf="connectionState !== 'connected'" [class.reconnecting]="connectionState === 'reconnecting'">
+    <span *ngIf="connectionState === 'disconnected'">⚠ Disconnected — Waiting for network...</span>
+    <span *ngIf="connectionState === 'reconnecting'">🔄 Reconnecting...</span>
+  </div>
+
   <!-- Sidebar -->
   <aside class="sidebar" [class.mobile-visible]="showMobileSidebar">
     <div class="sidebar-header">
@@ -53,7 +59,7 @@
         </div>
         <div class="user-details">
           <span class="user-name">{{ user.username }}</span>
-          <span class="user-status-text">{{ isUserOnline(user._id) ? 'Online' : 'Offline' }}</span>
+          <span class="user-status-text" [class.status-online]="isUserOnline(user._id)">{{ getUserStatusText(user) }}</span>
         </div>
         <button class="icon-btn add-contact-btn" (click)="toggleContact(user, $event)" [title]="isContact(user._id) ? 'Remove Contact' : 'Add Contact'">
           <svg *ngIf="isContact(user._id)" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -97,7 +103,7 @@
           <div class="chat-header-info">
             <span class="chat-header-name">{{ selectedUser.username }}</span>
             <span class="chat-header-status" *ngIf="typingUser">typing...</span>
-            <span class="chat-header-status" *ngIf="!typingUser">{{ isUserOnline(selectedUser._id) ? 'Online' : 'Offline' }}</span>
+            <span class="chat-header-status" *ngIf="!typingUser">{{ getUserStatusText(selectedUser) }}</span>
           </div>
         </div>
       </div>

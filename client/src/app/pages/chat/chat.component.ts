@@ -32,6 +32,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   typingUser: string | null = null;
   showMobileSidebar = true;
   uploadingFile = false;
+  lastSeenMap: { [userId: string]: string } = {};
+  connectionState: 'connected' | 'disconnected' | 'reconnecting' = 'disconnected';
 
   private subs: Subscription[] = [];
   private shouldScroll = false;
@@ -175,6 +177,50 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         if (userId && this.selectedUser && userId === this.selectedUser._id) {
           this.typingUser = null;
         }
+      })
+    );
+
+    // Listen for individual user status changes with lastSeen
+    this.subs.push(
+      this.socketService.userStatus$.subscribe(data => {
+        if (!data) return;
+        this.ngZone.run(() => {
+          const { userId, status, lastSeen } = data;
+
+          // Update lastSeen map
+          if (lastSeen) {
+            this.lastSeenMap[userId] = lastSeen;
+          } else {
+            delete this.lastSeenMap[userId];
+          }
+
+          // Update status in all arrays
+          const newStatus = status as 'online' | 'offline' | 'away';
+          this.users = this.users.map(u =>
+            u._id === userId ? { ...u, status: newStatus, lastSeen: lastSeen || u.lastSeen } : u
+          );
+          this.contacts = this.contacts.map(u =>
+            u._id === userId ? { ...u, status: newStatus, lastSeen: lastSeen || u.lastSeen } : u
+          );
+
+          // Update selected user if it's the affected user
+          if (this.selectedUser && this.selectedUser._id === userId) {
+            this.selectedUser = { ...this.selectedUser, status: newStatus, lastSeen: lastSeen || this.selectedUser.lastSeen };
+          }
+
+          this.filterUsers();
+          this.cdr.detectChanges();
+        });
+      })
+    );
+
+    // Track connection state
+    this.subs.push(
+      this.socketService.connectionState$.subscribe(state => {
+        this.ngZone.run(() => {
+          this.connectionState = state;
+          this.cdr.detectChanges();
+        });
       })
     );
   }
@@ -347,6 +393,31 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   getUserInitial(username: string): string {
     return username ? username.charAt(0).toUpperCase() : '?';
+  }
+
+  formatLastSeen(userId: string): string {
+    const lastSeen = this.lastSeenMap[userId];
+    if (!lastSeen) return 'Offline';
+
+    const diff = Date.now() - new Date(lastSeen).getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return new Date(lastSeen).toLocaleDateString([], { month: 'short', day: 'numeric' });
+  }
+
+  getUserStatusText(user: any): string {
+    if (this.isUserOnline(user._id)) return 'Online';
+    const lastSeen = this.lastSeenMap[user._id] || user.lastSeen;
+    if (lastSeen) {
+      return 'Last seen ' + this.formatLastSeen(user._id);
+    }
+    return 'Offline';
   }
 
   goBackToSidebar(): void {

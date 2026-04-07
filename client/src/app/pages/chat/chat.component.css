@@ -3,6 +3,32 @@
   height: 100vh;
   background: var(--bg-primary);
   overflow: hidden;
+  position: relative;
+}
+
+.connection-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 0.5rem 1rem;
+  background: #f59e0b;
+  color: #000;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  animation: slideDown 0.3s ease;
+}
+
+.connection-banner.reconnecting {
+  background: #6366f1;
+  color: #fff;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
 }
 
 /* ========= SIDEBAR ========= */
@@ -265,6 +291,12 @@
 .user-status-text {
   font-size: 0.78rem;
   color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.user-status-text.status-online {
+  color: var(--success);
+  font-weight: 500;
 }
 
 .add-contact-btn {
