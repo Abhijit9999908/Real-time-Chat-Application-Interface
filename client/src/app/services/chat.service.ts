@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpRequest, HttpEvent, HttpEventType } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { User, Message, MessagesResponse } from '../models/interfaces';
@@ -9,6 +9,7 @@ export class ChatService {
   private selectedUserSubject = new BehaviorSubject<User | null>(null);
   private messagesSubject = new BehaviorSubject<Message[]>([]);
   private usersSubject = new BehaviorSubject<User[]>([]);
+  uploadProgress$ = new BehaviorSubject<number>(0);
 
   selectedUser$ = this.selectedUserSubject.asObservable();
   messages$ = this.messagesSubject.asObservable();
@@ -70,7 +71,6 @@ export class ChatService {
 
   addMessage(message: Message): void {
     const current = this.messagesSubject.value;
-    // Avoid duplicates
     if (!current.find(m => m._id === message._id)) {
       this.messagesSubject.next([...current, message]);
     }
@@ -79,6 +79,29 @@ export class ChatService {
   uploadFile(file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.http.post(`${environment.apiUrl}/messages/upload`, formData);
+    this.uploadProgress$.next(0);
+
+    return new Observable(observer => {
+      const req = new HttpRequest('POST', `${environment.apiUrl}/messages/upload`, formData, {
+        reportProgress: true
+      });
+
+      this.http.request(req).subscribe({
+        next: (event: HttpEvent<any>) => {
+          if (event.type === HttpEventType.UploadProgress) {
+            const progress = event.total ? Math.round((100 * event.loaded) / event.total) : 0;
+            this.uploadProgress$.next(progress);
+          } else if (event.type === HttpEventType.Response) {
+            this.uploadProgress$.next(100);
+            observer.next(event.body);
+            observer.complete();
+          }
+        },
+        error: (err) => {
+          this.uploadProgress$.next(0);
+          observer.error(err);
+        }
+      });
+    });
   }
 }

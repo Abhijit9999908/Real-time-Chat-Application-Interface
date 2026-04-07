@@ -32,6 +32,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   typingUser: string | null = null;
   showMobileSidebar = true;
   uploadingFile = false;
+  uploadProgress = 0;
   lastSeenMap: { [userId: string]: string } = {};
   connectionState: 'connected' | 'disconnected' | 'reconnecting' = 'disconnected';
 
@@ -97,18 +98,38 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (event) {
       event.stopPropagation();
     }
+    const wasContact = this.isContact(user._id);
     this.chatService.addOrRemoveContact(user._id).subscribe({
       next: () => {
-        if (this.activeTab === 'contacts') {
-          this.loadContacts();
-        } else {
-          // If searching, just visually toggle their contact status if need be, 
-          // or refresh the contact list in the background
-          this.chatService.fetchContacts().subscribe(res => {
-            this.contacts = res.contacts;
-            this.cdr.detectChanges();
-          });
-        }
+        this.ngZone.run(() => {
+          if (!wasContact) {
+            // Added as contact — switch to contacts tab & auto-select them
+            this.activeTab = 'contacts';
+            this.searchQuery = '';
+            this.chatService.fetchContacts().subscribe(res => {
+              this.ngZone.run(() => {
+                this.contacts = res.contacts;
+                this.users = res.contacts;
+                this.filterUsers();
+                // Auto-select the user to start chatting immediately
+                this.selectUser(user);
+                this.cdr.detectChanges();
+              });
+            });
+          } else {
+            // Removed contact — refresh the contacts list
+            this.chatService.fetchContacts().subscribe(res => {
+              this.ngZone.run(() => {
+                this.contacts = res.contacts;
+                if (this.activeTab === 'contacts') {
+                  this.users = res.contacts;
+                  this.filterUsers();
+                }
+                this.cdr.detectChanges();
+              });
+            });
+          }
+        });
       }
     });
   }
@@ -322,23 +343,50 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     const file = input.files?.[0];
     if (!file || !this.selectedUser) return;
 
+    // Check file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be under 10MB');
+      input.value = '';
+      return;
+    }
+
     this.uploadingFile = true;
+    this.uploadProgress = 0;
+
+    // Subscribe to progress
+    const progressSub = this.chatService.uploadProgress$.subscribe(p => {
+      this.ngZone.run(() => {
+        this.uploadProgress = p;
+        this.cdr.detectChanges();
+      });
+    });
+
     this.chatService.uploadFile(file).subscribe({
       next: (res) => {
-        this.socketService.sendMessage({
-          receiverId: this.selectedUser!._id,
-          content: file.name,
-          type: res.type,
-          fileName: res.fileName,
-          fileUrl: res.fileUrl,
-          fileSize: res.fileSize
+        this.ngZone.run(() => {
+          this.socketService.sendMessage({
+            receiverId: this.selectedUser!._id,
+            content: file.name,
+            type: res.type,
+            fileName: res.fileName,
+            fileUrl: res.fileUrl,
+            fileSize: res.fileSize
+          });
+          this.uploadingFile = false;
+          this.uploadProgress = 0;
+          progressSub.unsubscribe();
+          input.value = '';
+          this.cdr.detectChanges();
         });
-        this.uploadingFile = false;
-        input.value = '';
       },
       error: () => {
-        this.uploadingFile = false;
-        input.value = '';
+        this.ngZone.run(() => {
+          this.uploadingFile = false;
+          this.uploadProgress = 0;
+          progressSub.unsubscribe();
+          input.value = '';
+          this.cdr.detectChanges();
+        });
       }
     });
   }

@@ -152,7 +152,8 @@
 
       <!-- Message Input -->
       <div class="message-input-area">
-        <input type="file" #fileInput (change)="onFileSelected($event)" hidden />
+        <input type="file" #fileInput (change)="onFileSelected($event)" hidden
+          accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,.7z" />
         <button class="icon-btn attach-btn" (click)="triggerFileUpload()" [disabled]="uploadingFile" title="Attach file">
           <svg *ngIf="!uploadingFile" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V5a1 1 0 112 0v6a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"/></svg>
           <span *ngIf="uploadingFile" class="upload-spinner"></span>
@@ -170,6 +171,12 @@
         <button class="send-btn" (click)="sendMessage()" [disabled]="!messageText.trim()">
           <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
         </button>
+      </div>
+
+      <!-- Upload Progress Bar -->
+      <div class="upload-progress-bar" *ngIf="uploadingFile">
+        <div class="upload-progress-fill" [style.width.%]="uploadProgress"></div>
+        <span class="upload-progress-text">Uploading {{ uploadProgress }}%</span>
       </div>
     </ng-container>
   </main>
