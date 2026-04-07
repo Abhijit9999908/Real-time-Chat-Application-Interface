@@ -33,6 +33,10 @@ const userSchema = new mongoose.Schema({
     enum: ['online', 'offline', 'away'],
     default: 'offline'
   },
+  contacts: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
   lastSeen: {
     type: Date,
     default: Date.now

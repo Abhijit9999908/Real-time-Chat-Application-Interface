@@ -17,6 +17,43 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
+// Get user's contacts
+router.get('/contacts', authenticate, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate(
+      'contacts',
+      'username email avatar status lastSeen bio'
+    );
+    res.json({ contacts: user.contacts || [] });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch contacts.' });
+  }
+});
+
+// Add or remove a contact
+router.post('/contacts/:id', authenticate, async (req, res) => {
+  try {
+    const targetUserId = req.params.id;
+    if (targetUserId === req.user._id.toString()) {
+      return res.status(400).json({ message: 'Cannot add yourself.' });
+    }
+
+    const user = await User.findById(req.user._id);
+    const isContact = user.contacts.includes(targetUserId);
+
+    if (isContact) {
+      user.contacts.pull(targetUserId);
+    } else {
+      user.contacts.push(targetUserId);
+    }
+    
+    await user.save();
+    res.json({ message: isContact ? 'Contact removed.' : 'Contact added.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to modify contact list.' });
+  }
+});
+
 // Search users by username
 router.get('/search', authenticate, async (req, res) => {
   try {

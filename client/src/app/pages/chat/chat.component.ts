@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked, NgZone, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -21,7 +21,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
   currentUser: User | null = null;
   users: User[] = [];
+  contacts: User[] = [];
   filteredUsers: User[] = [];
+  activeTab: 'contacts' | 'search' = 'contacts';
   selectedUser: User | null = null;
   messages: Message[] = [];
   onlineUserIds: string[] = [];
@@ -39,13 +41,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     private authService: AuthService,
     private socketService: SocketService,
     private chatService: ChatService,
-    private router: Router
+    private router: Router,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     this.currentUser = this.authService.currentUser;
     this.socketService.connect();
-    this.loadUsers();
+    this.loadContacts();
     this.setupSocketListeners();
   }
 
@@ -62,44 +66,94 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.typingTimeout) clearTimeout(this.typingTimeout);
   }
 
-  private loadUsers(): void {
-    this.chatService.fetchUsers().subscribe({
+  private loadContacts(): void {
+    this.chatService.fetchContacts().subscribe({
       next: (res) => {
-        this.users = res.users;
-        this.filteredUsers = res.users;
+        this.ngZone.run(() => {
+          this.contacts = res.contacts;
+          this.users = res.contacts;
+          this.filterUsers();
+          this.cdr.detectChanges();
+        });
       }
     });
+  }
+
+  switchTab(tab: 'contacts' | 'search'): void {
+    this.activeTab = tab;
+    this.searchQuery = '';
+    
+    if (tab === 'contacts') {
+      this.loadContacts();
+    } else {
+      this.users = [];
+      this.filterUsers();
+    }
+  }
+
+  toggleContact(user: User, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.chatService.addOrRemoveContact(user._id).subscribe({
+      next: () => {
+        if (this.activeTab === 'contacts') {
+          this.loadContacts();
+        } else {
+          // If searching, just visually toggle their contact status if need be, 
+          // or refresh the contact list in the background
+          this.chatService.fetchContacts().subscribe(res => {
+            this.contacts = res.contacts;
+            this.cdr.detectChanges();
+          });
+        }
+      }
+    });
+  }
+
+  isContact(userId: string): boolean {
+    return this.contacts.some(c => c._id === userId);
   }
 
   private setupSocketListeners(): void {
     this.subs.push(
       this.socketService.onlineUsers$.subscribe(ids => {
-        this.onlineUserIds = ids;
-        this.users = this.users.map(u => ({
-          ...u,
-          status: ids.includes(u._id) ? 'online' as const : 'offline' as const
-        }));
-        this.filterUsers();
+        this.ngZone.run(() => {
+          this.onlineUserIds = ids;
+          this.users = this.users.map(u => ({
+            ...u,
+            status: ids.includes(u._id) ? 'online' as const : 'offline' as const
+          }));
+          this.contacts = this.contacts.map(u => ({
+            ...u,
+            status: ids.includes(u._id) ? 'online' as const : 'offline' as const
+          }));
+          this.filterUsers();
+          this.cdr.detectChanges();
+        });
       })
     );
 
     this.subs.push(
       this.socketService.newMessage$.subscribe(msg => {
         if (!msg) return;
-        const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender;
-        const receiverId = typeof msg.receiver === 'object' ? msg.receiver._id : msg.receiver;
-        const isCurrentConversation = this.selectedUser && (
-          (senderId === this.selectedUser._id && receiverId === this.currentUser?._id) ||
-          (senderId === this.currentUser?._id && receiverId === this.selectedUser._id)
-        );
+        this.ngZone.run(() => {
+          const senderId = typeof msg.sender === 'object' ? msg.sender._id : msg.sender;
+          const receiverId = typeof msg.receiver === 'object' ? msg.receiver._id : msg.receiver;
+          const isCurrentConversation = this.selectedUser && (
+            (senderId === this.selectedUser._id && receiverId === this.currentUser?._id) ||
+            (senderId === this.currentUser?._id && receiverId === this.selectedUser._id)
+          );
 
-        if (isCurrentConversation && !this.messages.find(m => m._id === msg._id)) {
-          this.messages = [...this.messages, msg];
-          this.shouldScroll = true;
-          if (senderId === this.selectedUser?._id) {
-            this.socketService.markAsRead(senderId);
+          if (isCurrentConversation && !this.messages.find(m => m._id === msg._id)) {
+            this.messages = [...this.messages, msg];
+            this.shouldScroll = true;
+            if (senderId === this.selectedUser?._id) {
+              this.socketService.markAsRead(senderId);
+            }
           }
-        }
+          this.cdr.detectChanges();
+        });
       })
     );
 
@@ -133,26 +187,51 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
     this.chatService.fetchMessages(user._id).subscribe({
       next: (res) => {
-        this.messages = res.messages;
-        this.shouldScroll = true;
-        this.socketService.markAsRead(user._id);
+        this.ngZone.run(() => {
+          this.messages = res.messages;
+          this.shouldScroll = true;
+          this.socketService.markAsRead(user._id);
+          this.cdr.detectChanges();
+        });
       }
     });
   }
 
   filterUsers(): void {
     if (!this.searchQuery.trim()) {
-      this.filteredUsers = this.users;
+      if (this.activeTab === 'search') {
+        this.filteredUsers = []; // Clear search results if empty
+      } else {
+        this.filteredUsers = this.contacts;
+      }
       return;
     }
     const q = this.searchQuery.toLowerCase();
-    this.filteredUsers = this.users.filter(u =>
-      u.username.toLowerCase().includes(q)
-    );
+    
+    // Auto-switch to search tab if they type and are on contacts
+    if (this.activeTab === 'contacts') {
+      this.filteredUsers = this.contacts.filter(u =>
+        u.username.toLowerCase().includes(q)
+      );
+    } else {
+      // It's the search tab, perform API search
+    }
   }
 
   onSearchChange(): void {
-    this.filterUsers();
+    if (this.activeTab === 'search' && this.searchQuery.trim()) {
+      this.chatService.searchUsers(this.searchQuery).subscribe({
+        next: (res) => {
+          this.ngZone.run(() => {
+            this.users = res.users;
+            this.filteredUsers = res.users;
+            this.cdr.detectChanges();
+          });
+        }
+      });
+    } else {
+      this.filterUsers();
+    }
   }
 
   sendMessage(): void {

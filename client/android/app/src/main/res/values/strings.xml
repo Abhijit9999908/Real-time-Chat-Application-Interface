@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">chitchat</string>
+    <string name="title_activity_main">chitchat</string>
+    <string name="package_name">com.chitchat.app</string>
+    <string name="custom_url_scheme">com.chitchat.app</string>
+</resources>

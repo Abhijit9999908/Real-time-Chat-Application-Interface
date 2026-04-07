@@ -41,6 +41,14 @@ export class ChatService {
     return this.http.get<{ users: User[] }>(`${environment.apiUrl}/users/search?q=${query}`);
   }
 
+  fetchContacts(): Observable<{ contacts: User[] }> {
+    return this.http.get<{ contacts: User[] }>(`${environment.apiUrl}/users/contacts`);
+  }
+
+  addOrRemoveContact(userId: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/users/contacts/${userId}`, {});
+  }
+
   setUsers(users: User[]): void {
     this.usersSubject.next(users);
   }
