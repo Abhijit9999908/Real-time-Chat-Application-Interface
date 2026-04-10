@@ -615,6 +615,7 @@
   max-width: min(72%, 620px);
   min-width: 0;
   min-height: 0;
+  align-self: flex-start;
   background: var(--bg-tertiary);
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: 20px;
@@ -627,6 +628,7 @@
 }
 
 .message-bubble.own {
+  align-self: flex-end;
   background: var(--accent);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.1);
@@ -1215,7 +1217,7 @@
 
   .composer {
     padding: 0.65rem 0.7rem;
-    padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+    padding-bottom: calc(max(0.65rem, env(safe-area-inset-bottom)) + 12px);
     gap: 0.45rem;
   }
 
