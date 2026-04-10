@@ -18,6 +18,12 @@ const setupSocket = require('./socket/handler');
 const app = express();
 const server = http.createServer(app);
 
+// Simple request logger for debugging Render
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
   'http://localhost:4200',
@@ -93,14 +99,23 @@ app.get('/api/health', (req, res) => {
 });
 
 // Serve Angular frontend (production build)
-const clientBuildPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
+// Prioritize local 'public' folder (good for containerized deploys)
+let clientBuildPath = path.join(__dirname, 'public');
+if (!fs.existsSync(clientBuildPath)) {
+  // Fallback to sibling client folder (local development)
+  clientBuildPath = path.join(__dirname, '..', 'client', 'dist', 'client', 'browser');
+}
+
 if (fs.existsSync(clientBuildPath)) {
+  console.log(`📂 Serving static files from: ${clientBuildPath}`);
   app.use(express.static(clientBuildPath));
 
   // SPA catch-all: send index.html for any non-API route
   app.get(/^\/(?!api\/).*/, (req, res) => {
     res.sendFile(path.join(clientBuildPath, 'index.html'));
   });
+} else {
+  console.warn('⚠️ Client build path not found. Static files will not be served.');
 }
 
 // Global error handling middleware

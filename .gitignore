@@ -5,3 +5,6 @@ server/uploads/
 server/node_modules/
 client/node_modules/
 client/.angular/
+# Ensure build folders are tracked for Render
+!client/dist/
+!server/public/
