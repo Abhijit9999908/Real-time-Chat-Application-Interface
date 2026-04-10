@@ -1,9 +1,7 @@
 node_modules/
-dist/
+/dist/
 .env
 server/uploads/
 server/node_modules/
 client/node_modules/
-# client/dist/ - NOT ignored, needed for Render deployment
 client/.angular/
-!client/dist/
