@@ -1,15 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #070b13;
-  --bg-secondary: #101826;
-  --bg-tertiary: #182132;
-  --border: rgba(255, 255, 255, 0.08);
-  --text-primary: #f3f7ff;
-  --text-secondary: rgba(229, 236, 255, 0.72);
-  --text-muted: rgba(205, 215, 235, 0.56);
-  --accent: #7c8bff;
-  --accent-hover: #6b79f8;
+  --bg-primary: #020202;
+  --bg-secondary: #0a0a0a;
+  --bg-tertiary: #11141a;
+  --border: rgba(255, 255, 255, 0.06);
+  --text-primary: #f8f9fc;
+  --text-secondary: rgba(248, 249, 252, 0.72);
+  --text-muted: rgba(248, 249, 252, 0.45);
+  --accent: #0076FF;
+  --accent-hover: #3391FF;
   --success: #22c55e;
   --danger: #ef4444;
   color-scheme: dark;
@@ -23,8 +23,8 @@
   --text-primary: #111827;
   --text-secondary: rgba(15, 23, 42, 0.72);
   --text-muted: rgba(15, 23, 42, 0.48);
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
+  --accent: #0076FF;
+  --accent-hover: #3391FF;
   color-scheme: light;
 }
 
@@ -39,7 +39,7 @@
 html, body {
   height: 100%;
   height: 100dvh;
-  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -100,5 +100,10 @@ button:disabled {
     width: 3px;
     height: 3px;
   }
+}
+
+.outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent);
 }
 

@@ -252,7 +252,7 @@
 .ghost-btn.active,
 .switcher-btn.active,
 .segmented button.active {
-  background: rgba(110, 132, 255, 0.18);
+  background: var(--accent);
   color: #fff;
 }
 
@@ -358,11 +358,11 @@
 .form-grid textarea,
 .form-grid select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-tertiary);
+  border: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
-  border-radius: 16px;
-  padding: 0.9rem 1rem;
+  border-radius: 999px;
+  padding: 0.9rem 1.1rem;
   outline: none;
   font: inherit;
   transition: border-color 0.2s ease, background 0.2s ease;
@@ -503,7 +503,7 @@
 }
 
 .connection-banner.reconnecting {
-  background: #7c8bff;
+  background: var(--accent);
   color: white;
 }
 
@@ -511,7 +511,7 @@
   padding: 1.1rem 1.35rem;
   padding-top: max(1.1rem, env(safe-area-inset-top));
   border-bottom: 1px solid var(--stroke);
-  background: rgba(7, 12, 22, 0.62);
+  background: rgba(2, 2, 2, 0.65);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   flex-shrink: 0;
@@ -604,6 +604,7 @@
 
 .message-row {
   display: flex;
+  align-items: flex-end;
 }
 
 .message-row.own {
@@ -612,9 +613,11 @@
 
 .message-bubble {
   max-width: min(72%, 620px);
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 24px;
+  min-width: 0;
+  min-height: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
   padding: 0.95rem 1rem 0.8rem;
   display: flex;
   flex-direction: column;
@@ -624,7 +627,9 @@
 }
 
 .message-bubble.own {
-  background: linear-gradient(135deg, rgba(116, 96, 255, 0.82), rgba(67, 194, 167, 0.56));
+  background: var(--accent);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .message-bubble.highlight {
@@ -787,7 +792,7 @@
   padding-bottom: max(0.85rem, env(safe-area-inset-bottom));
   gap: 0.6rem;
   border-top: 1px solid var(--stroke);
-  background: rgba(7, 12, 22, 0.72);
+  background: rgba(2, 2, 2, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   flex-shrink: 0;
@@ -1215,7 +1220,7 @@
   }
 
   .composer-input-wrap input {
-    padding: 0.75rem 0.6rem 0.75rem 2.6rem;
+    padding: 0.75rem 0.6rem 0.75rem 3rem;
     font-size: 0.92rem;
   }
 
