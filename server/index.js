@@ -18,11 +18,20 @@ const setupSocket = require('./socket/handler');
 const app = express();
 const server = http.createServer(app);
 
+// Essential for Render/Proxied environments to identify real client IPs
+app.set('trust proxy', 1);
+
 // Simple request logger for debugging Render
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${req.ip}`);
   next();
 });
+
+// Periodic memory monitoring
+setInterval(() => {
+  const used = process.memoryUsage();
+  console.log(`📊 Memory: RSS ${Math.round(used.rss / 1024 / 1024 * 100) / 100}MB, Heap ${Math.round(used.heapUsed / 1024 / 1024 * 100) / 100}MB / ${Math.round(used.heapTotal / 1024 / 1024 * 100) / 100}MB`);
+}, 60000); // Log every minute
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -38,6 +47,7 @@ const io = new Server(server, {
     methods: ['GET', 'POST'],
     credentials: true
   },
+  maxHttpBufferSize: 1e7, // 10MB to match multer limit
   pingTimeout: 60000,
   pingInterval: 25000
 });
@@ -62,8 +72,8 @@ app.use(cors({
 
 // Rate limiters
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20,
+  windowMs: 15 * 60 * 1000, 
+  max: 100, // Increased from 20
   message: { message: 'Too many attempts. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false
@@ -71,7 +81,7 @@ const authLimiter = rateLimit({
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1000, // Increased from 200
   message: { message: 'Too many requests. Please slow down.' },
   standardHeaders: true,
   legacyHeaders: false
@@ -95,7 +105,16 @@ app.use('/api/messages', messageRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  const used = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    memory: {
+      rss: `${Math.round(used.rss / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(used.heapUsed / 1024 / 1024)} MB`
+    },
+    uptime: `${Math.round(process.uptime())}s`
+  });
 });
 
 // Serve Angular frontend (production build)
