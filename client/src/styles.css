@@ -1,17 +1,31 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg-primary: #0f0f14;
-  --bg-secondary: #16161e;
-  --bg-tertiary: #1e1e28;
-  --border: #2a2a38;
-  --text-primary: #e4e4ec;
-  --text-secondary: #9898ac;
-  --text-muted: #5c5c72;
-  --accent: #6366f1;
-  --accent-hover: #4f46e5;
+  --bg-primary: #070b13;
+  --bg-secondary: #101826;
+  --bg-tertiary: #182132;
+  --border: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f7ff;
+  --text-secondary: rgba(229, 236, 255, 0.72);
+  --text-muted: rgba(205, 215, 235, 0.56);
+  --accent: #7c8bff;
+  --accent-hover: #6b79f8;
   --success: #22c55e;
   --danger: #ef4444;
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --bg-primary: #eef3ff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #d9e2ff;
+  --border: rgba(15, 23, 42, 0.08);
+  --text-primary: #111827;
+  --text-secondary: rgba(15, 23, 42, 0.72);
+  --text-muted: rgba(15, 23, 42, 0.48);
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  color-scheme: light;
 }
 
 *,
@@ -24,12 +38,20 @@
 
 html, body {
   height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  height: 100dvh;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+body {
+  transition: background 0.25s ease, color 0.25s ease;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 a {
@@ -37,22 +59,26 @@ a {
   text-decoration: none;
 }
 
-button {
-  font-family: inherit;
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
 }
 
-input, textarea {
-  font-family: inherit;
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 ::selection {
-  background: rgba(99, 102, 241, 0.3);
-  color: #fff;
+  background: rgba(124, 139, 255, 0.3);
 }
 
-/* Smooth scrollbar for the whole app */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -60,10 +86,19 @@ input, textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: rgba(148, 163, 184, 0.45);
 }
+
+/* Reduce scrollbar on mobile touch devices */
+@media (pointer: coarse) {
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+}
+

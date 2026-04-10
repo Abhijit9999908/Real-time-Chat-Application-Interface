@@ -1,205 +1,469 @@
-<div class="chat-layout" [class.sidebar-hidden]="!showMobileSidebar">
-
-  <!-- Connection State Banner -->
-  <div class="connection-banner" *ngIf="currentUser && connectionState !== 'connected'" [class.reconnecting]="connectionState === 'reconnecting'">
-    <span *ngIf="connectionState === 'disconnected'">⚠ Disconnected — Waiting for network...</span>
-    <span *ngIf="connectionState === 'reconnecting'">🔄 Reconnecting...</span>
-  </div>
-
-  <!-- Sidebar -->
-  <aside class="sidebar" [class.mobile-visible]="showMobileSidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-icon">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.03 2 10.94c0 2.75 1.35 5.22 3.5 6.86V22l4.22-2.31c1.13.31 2.33.47 3.58.47 5.52 0 10-4.03 10-8.94S17.52 2 12 2z" fill="currentColor"/><circle cx="8" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="12" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="16" cy="11" r="1.5" fill="var(--bg-secondary)"/></svg>
+<div class="chat-shell" [style.--chat-wallpaper]="currentUser?.wallpaper ? 'url(' + currentUser?.wallpaper + ')' : 'none'">
+  <aside class="sidebar" [class.hidden-mobile]="selectedUser && !showMobileSidebar">
+    <div class="sidebar-topbar">
+      <div class="brand-block">
+        <div class="brand-mark">C</div>
+        <div>
+          <h1>ChitChat</h1>
+          <p>Secure real-time messaging</p>
         </div>
-        <span class="sidebar-title">ChitChat</span>
       </div>
-      <button class="icon-btn logout-btn" (click)="logout()" title="Logout">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V4a1 1 0 00-1-1H3zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+      <div class="topbar-actions">
+        <button class="ghost-btn" (click)="toggleArchiveView()" [class.active]="showArchivedChats">
+          {{ showArchivedChats ? 'Inbox' : 'Archived' }}
+        </button>
+        <button class="icon-btn" (click)="showSettingsPanel = true" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .17 1.7 1.7 0 0 0-.92 1.53V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-.92-1.53 1.7 1.7 0 0 0-1-.17 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.17-1 1.7 1.7 0 0 0-1.53-.92H2.8a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.53-.92 1.7 1.7 0 0 0 .17-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6c.34 0 .68-.06 1-.17a1.7 1.7 0 0 0 .92-1.53V2.8a2 2 0 1 1 4 0v.1c0 .68.37 1.31.96 1.62.31.12.65.18.99.18.68 0 1.34-.24 1.85-.7l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06c-.46.5-.7 1.16-.7 1.85 0 .34.06.68.18.99.31.59.94.96 1.62.96h.1a2 2 0 1 1 0 4h-.1c-.68 0-1.31.37-1.62.96-.12.31-.18.65-.18.99Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="profile-chip">
+      <div class="avatar-block large" [class.has-image]="!!getAvatarUrl(currentUser)">
+        <img *ngIf="getAvatarUrl(currentUser)" [src]="getAvatarUrl(currentUser)" [alt]="currentUser?.username">
+        <span *ngIf="!getAvatarUrl(currentUser)">{{ getUserInitial(currentUser?.username || 'U') }}</span>
+      </div>
+      <div class="profile-copy">
+        <strong>{{ currentUser?.username }}</strong>
+        <span>{{ currentUser?.bio || 'Set your profile status' }}</span>
+      </div>
+      <button class="mini-theme" (click)="applyTheme(profileDraft.theme === 'dark' ? 'light' : 'dark'); saveProfile()">
+        {{ profileDraft.theme === 'dark' ? 'Light' : 'Dark' }}
       </button>
     </div>
 
-    <div class="search-box-wrapper">
-      <div class="search-box">
-        <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
-        <input
-          type="text"
-          placeholder="Search..."
-          [(ngModel)]="searchQuery"
-          (input)="onSearchChange()"
-        />
-      </div>
-
-      <div class="sidebar-tabs">
-        <button class="tab-btn" [class.active]="activeTab === 'contacts'" (click)="switchTab('contacts')">Contacts</button>
-        <button class="tab-btn" [class.active]="activeTab === 'search'" (click)="switchTab('search')">Find Users</button>
-      </div>
+    <div class="switcher-row">
+      <button class="switcher-btn" [class.active]="activeTab === 'contacts'" (click)="switchTab('contacts')">Chats</button>
+      <button class="switcher-btn" [class.active]="activeTab === 'search'" (click)="switchTab('search')">Directory</button>
     </div>
 
-    <div class="user-info-bar">
-      <div class="user-info-avatar">{{ getUserInitial(currentUser?.username || '') }}</div>
-      <div class="user-info-details">
-        <span class="user-info-name">{{ currentUser?.username }}</span>
-        <span class="user-info-status">Online</span>
-      </div>
+    <div class="search-wrap">
+      <input
+        [(ngModel)]="searchQuery"
+        (input)="onContactSearchChange()"
+        [placeholder]="activeTab === 'contacts' ? 'Search conversations' : 'Search directory'"
+      />
     </div>
 
-    <div class="users-list">
-      <div class="users-section-label">{{ activeTab === 'contacts' ? 'Your Contacts' : 'Search Results' }}</div>
-      <div
+    <div class="section-label">
+      {{ showArchivedChats ? 'Archived conversations' : activeTab === 'contacts' ? 'Recent conversations' : 'All Users' }}
+    </div>
+
+    <div class="contact-list">
+      <button
         *ngFor="let user of filteredUsers"
-        class="user-item"
+        class="contact-card"
         [class.active]="selectedUser?._id === user._id"
-        (click)="selectUser(user)"
+        (click)="activeTab === 'contacts' || isContact(user._id) ? selectUser(user) : toggleContact(user)"
       >
-        <div class="user-avatar-wrapper">
-          <div class="user-avatar">{{ getUserInitial(user.username) }}</div>
-          <span class="status-dot" [class.online]="isUserOnline(user._id)"></span>
+        <div class="avatar-block" [class.has-image]="!!user.avatar">
+          <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.username">
+          <span *ngIf="!user.avatar">{{ getUserInitial(user.username) }}</span>
+          <span class="presence-dot" [class.online]="onlineUserIds.includes(user._id)"></span>
         </div>
-        <div class="user-details">
-          <span class="user-name">{{ user.username }}</span>
-          <span class="user-status-text" [class.status-online]="isUserOnline(user._id)">{{ getUserStatusText(user) }}</span>
-        </div>
-        <button class="icon-btn add-contact-btn" (click)="toggleContact(user, $event)" [title]="isContact(user._id) ? 'Remove Contact' : 'Add Contact'">
-          <svg *ngIf="isContact(user._id)" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-          <svg *ngIf="!isContact(user._id)" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/></svg>
-        </button>
-      </div>
 
-      <div *ngIf="filteredUsers.length === 0" class="no-users">
-        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
-        <p>{{ activeTab === 'contacts' ? 'No contacts found' : (searchQuery ? 'No users found' : 'Type to search users') }}</p>
+        <div class="contact-main">
+          <div class="contact-topline">
+            <strong>{{ user.username }}</strong>
+            <span class="contact-time">{{ formatContactTimestamp(user.lastMessageAt) }}</span>
+          </div>
+          <div class="contact-bottomline">
+            <span class="contact-preview">{{ user.lastMessagePreview || (activeTab === 'search' ? (user.bio || 'No bio yet') : 'No messages yet') }}</span>
+            <span *ngIf="user.unreadCount" class="unread-badge">{{ user.unreadCount }}</span>
+          </div>
+        </div>
+
+        <div class="contact-meta">
+          <span *ngIf="user.isPinned" class="meta-pill">Pinned</span>
+          <span *ngIf="user.isMuted" class="meta-pill mute">Muted</span>
+          <button *ngIf="activeTab === 'search' && !isContact(user._id)" class="add-btn" type="button" (click)="toggleContact(user, $event)">Add</button>
+        </div>
+      </button>
+
+      <div *ngIf="!filteredUsers.length" class="empty-state small">
+        <h3>No active conversations</h3>
+        <p>{{ showArchivedChats ? 'Your archived conversations will appear here.' : 'Search the directory to start a new chat.' }}</p>
       </div>
     </div>
   </aside>
 
-  <!-- Chat Area -->
-  <main class="chat-main" [class.mobile-visible]="!showMobileSidebar">
+  <main class="conversation-pane" *ngIf="selectedUser; else emptyPane">
+    <div class="connection-banner" *ngIf="connectionState !== 'connected'" [class.reconnecting]="connectionState === 'reconnecting'">
+      {{ connectionState === 'reconnecting' ? 'Restoring connection...' : 'Connection interrupted. Reconnecting...' }}
+    </div>
 
-    <!-- No chat selected -->
-    <div *ngIf="!selectedUser" class="no-chat-selected">
-      <div class="empty-state">
-        <div class="empty-icon">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.03 2 10.94c0 2.75 1.35 5.22 3.5 6.86V22l4.22-2.31c1.13.31 2.33.47 3.58.47 5.52 0 10-4.03 10-8.94S17.52 2 12 2z" fill="currentColor"/><circle cx="8" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="12" cy="11" r="1.5" fill="var(--bg-secondary)"/><circle cx="16" cy="11" r="1.5" fill="var(--bg-secondary)"/></svg>
+    <header class="conversation-header">
+      <div class="conversation-user">
+        <button class="icon-btn back-btn" (click)="closeConversation()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div class="avatar-block" [class.has-image]="!!selectedUser.avatar">
+          <img *ngIf="selectedUser.avatar" [src]="selectedUser.avatar" [alt]="selectedUser.username">
+          <span *ngIf="!selectedUser.avatar">{{ getUserInitial(selectedUser.username) }}</span>
+          <span class="presence-dot" [class.online]="onlineUserIds.includes(selectedUser._id)"></span>
         </div>
-        <h3>Start a Conversation</h3>
-        <p>Pick someone from your contacts to begin chatting</p>
+        <div>
+          <h2>{{ selectedUser.username }}</h2>
+          <p>{{ typingUser || getUserStatusText(selectedUser) }}</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="icon-btn" (click)="showChatSearch = !showChatSearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button class="icon-btn" (click)="showChatInfoPanel = true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8h.01"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="chat-search-strip" *ngIf="showChatSearch">
+      <input [(ngModel)]="chatSearchQuery" (input)="performChatSearch()" placeholder="Search messages in this chat">
+      <button class="ghost-btn" (click)="chatSearchQuery=''; highlightedMessageIds.clear(); showChatSearch = false">Close</button>
+    </div>
+
+    <div class="pinned-strip" *ngIf="getPinnedMessages().length">
+      <span>Pinned</span>
+      <div class="pinned-list">
+        <button *ngFor="let pinnedMessage of getPinnedMessages()" type="button" (click)="openMessageActions(pinnedMessage)">
+          {{ formatPreview(pinnedMessage) }}
+        </button>
       </div>
     </div>
 
-    <!-- Chat selected -->
-    <ng-container *ngIf="selectedUser">
-      <!-- Chat header -->
-      <div class="chat-header">
-        <button class="icon-btn back-btn" (click)="goBackToSidebar()">
-          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
-        </button>
-        <div class="chat-header-user">
-          <div class="chat-header-avatar-wrapper">
-            <div class="chat-header-avatar">{{ getUserInitial(selectedUser.username) }}</div>
-            <span class="header-status-dot" [class.online]="isUserOnline(selectedUser._id)"></span>
-          </div>
-          <div class="chat-header-info">
-            <span class="chat-header-name">{{ selectedUser.username }}</span>
-            <span class="chat-header-status" *ngIf="typingUser">typing...</span>
-            <span class="chat-header-status" *ngIf="!typingUser">{{ getUserStatusText(selectedUser) }}</span>
-          </div>
-        </div>
-      </div>
+    <section class="messages-area" #messagesContainer>
+      <ng-container *ngFor="let message of messages; let index = index">
+        <div *ngIf="shouldShowDate(index)" class="date-marker">{{ formatDate(message.createdAt) }}</div>
 
-      <!-- Messages -->
-      <div class="messages-area" #messagesContainer>
-        <ng-container *ngFor="let msg of messages; let i = index">
-          <!-- Date Separator -->
-          <div *ngIf="shouldShowDate(i)" class="date-separator">
-            <span>{{ formatDate(msg.createdAt) }}</span>
-          </div>
+        <div class="message-row" [class.own]="isOwnMessage(message)">
+          <div
+            class="message-bubble"
+            [class.own]="isOwnMessage(message)"
+            [class.highlight]="hasHighlights(message)"
+            (mousedown)="startLongPress(message)"
+            (mouseup)="cancelLongPress()"
+            (mouseleave)="cancelLongPress()"
+            (touchstart)="startLongPress(message)"
+            (touchend)="cancelLongPress()"
+            (dblclick)="openMessageActions(message)"
+          >
+            <div class="reply-snippet" *ngIf="message.replyTo">
+              <span>{{ getMessageUserId(message.replyTo.sender) === currentUser?._id ? 'You' : (typeof message.replyTo.sender === 'string' ? 'Contact' : message.replyTo.sender.username) }}</span>
+              <p>{{ getReplyPreview(message.replyTo) }}</p>
+            </div>
 
-          <div class="message-row" [class.own]="isOwnMessage(msg)">
-            <div class="message-bubble" [class.own]="isOwnMessage(msg)">
-              <!-- Text message -->
-              <p *ngIf="msg.type === 'text'" class="message-text">{{ msg.content }}</p>
+            <ng-container *ngIf="!message.deletedForEveryone; else deletedMessage">
+              <p *ngIf="message.type === 'text'" class="message-text">{{ message.content }}</p>
 
-              <!-- Image message -->
-              <div *ngIf="msg.type === 'image'" class="message-image">
-                <img [src]="getFileUrl(msg.fileUrl)" [alt]="msg.fileName" loading="lazy" />
+              <div *ngIf="message.type === 'image'" class="message-media image">
+                <img [src]="getFileUrl(message.fileUrl)" [alt]="message.fileName || 'Shared image'">
               </div>
 
-              <!-- File message -->
-              <div *ngIf="msg.type === 'file'" class="message-file">
-                <div class="file-icon">
-                  <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
-                </div>
-                <div class="file-details">
-                  <a [href]="getFileUrl(msg.fileUrl)" target="_blank" class="file-name">{{ msg.fileName }}</a>
-                  <span class="file-size">{{ formatFileSize(msg.fileSize) }}</span>
-                </div>
+              <div *ngIf="message.type === 'video'" class="message-media video">
+                <video controls [src]="getFileUrl(message.fileUrl)"></video>
               </div>
 
-              <span class="message-time">
-                {{ formatTime(msg.createdAt) }}
-                <svg *ngIf="isOwnMessage(msg) && msg.read" class="read-tick" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <div *ngIf="message.type === 'audio'" class="voice-note">
+                <div class="voice-pill">🎙️ {{ formatDuration(message.duration) }}</div>
+                <audio controls [src]="getFileUrl(message.fileUrl)"></audio>
+              </div>
+
+              <div *ngIf="message.type === 'file'" class="message-file-card">
+                <div>
+                  <strong>{{ message.fileName }}</strong>
+                  <span>{{ formatFileSize(message.fileSize) }}</span>
+                </div>
+                <a [href]="getFileUrl(message.fileUrl)" target="_blank">Open</a>
+              </div>
+
+              <a *ngIf="message.type === 'location'" class="location-card" target="_blank"
+                 [href]="'https://maps.google.com/?q=' + message.location?.latitude + ',' + message.location?.longitude">
+                <strong>📍 Shared location</strong>
+                <span>{{ message.location?.label || 'Open in Maps' }}</span>
+              </a>
+
+              <div *ngIf="message.type === 'contact'" class="contact-share-card">
+                <strong>{{ message.sharedContact?.username }}</strong>
+                <span>{{ message.sharedContact?.bio || 'Contact' }}</span>
+              </div>
+            </ng-container>
+
+            <ng-template #deletedMessage>
+              <p class="message-text deleted">This message was deleted</p>
+            </ng-template>
+
+            <div class="message-reactions" *ngIf="message.reactions?.length">
+              <button *ngFor="let reaction of message.reactions" type="button" (click)="toggleReaction(message, reaction.emoji)">
+                {{ reaction.emoji }}
+              </button>
+            </div>
+
+            <div class="message-meta">
+              <span *ngIf="message.pinned" class="pin-badge">Pinned</span>
+              <span>{{ formatTime(message.createdAt) }}</span>
+              <span *ngIf="message.editedAt">Edited</span>
+              <span *ngIf="isOwnMessage(message)" class="status-indicator" [attr.data-state]="messageStatus(message)">
+                <ng-container [ngSwitch]="messageStatus(message)">
+                  <span *ngSwitchCase="'read'">✓✓ Read</span>
+                  <span *ngSwitchCase="'delivered'">✓✓ Delivered</span>
+                  <span *ngSwitchDefault>✓ Sent</span>
+                </ng-container>
               </span>
             </div>
-          </div>
-        </ng-container>
 
-        <div *ngIf="messages.length === 0" class="no-messages">
-          <p>No messages yet. Say hello!</p>
+            <div class="quick-reactions">
+              <button *ngFor="let emoji of reactionOptions" type="button" (click)="toggleReaction(message, emoji)">{{ emoji }}</button>
+            </div>
+          </div>
         </div>
+      </ng-container>
+
+      <div *ngIf="!messages.length" class="empty-state conversation-empty">
+        <h3>No messages yet</h3>
+        <p>Share a message or file to begin the conversation.</p>
       </div>
+    </section>
 
-      <!-- Message Input -->
-      <div class="message-input-area">
-        <!-- Hidden file inputs for each type -->
-        <input type="file" #fileInputImages (change)="onFileSelected($event)" hidden accept="image/*,video/*" />
-        <input type="file" #fileInputDocs (change)="onFileSelected($event)" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" />
-        <input type="file" #fileInputAll (change)="onFileSelected($event)" hidden accept="*/*" />
+    <div class="composer-tools" *ngIf="replyingTo || editingMessageId || recordingError">
+      <div *ngIf="replyingTo" class="composer-chip">
+        <strong>Replying to</strong>
+        <span>{{ getReplyPreview(replyingTo) }}</span>
+      </div>
+      <div *ngIf="editingMessageId" class="composer-chip edit">
+        <strong>Editing message</strong>
+        <span>Update the text and send to save</span>
+      </div>
+      <div *ngIf="recordingError" class="composer-chip error">{{ recordingError }}</div>
+      <button class="ghost-btn" (click)="clearReplyState()">Clear</button>
+    </div>
 
-        <!-- Attach button with popup menu -->
-        <div class="attach-wrapper">
-          <button class="icon-btn attach-btn" (click)="toggleAttachMenu()" [disabled]="uploadingFile" title="Attach file">
-            <svg *ngIf="!uploadingFile" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V5a1 1 0 112 0v6a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd"/></svg>
-            <span *ngIf="uploadingFile" class="upload-spinner"></span>
-          </button>
+    <footer class="composer">
+      <input #avatarInput type="file" accept="image/*" hidden (change)="onAvatarSelected($event)">
+      <input #fileInputGallery type="file" hidden accept="image/*,video/*" (change)="onFileSelected($event)">
+      <input #fileInputCamera type="file" hidden accept="image/*,video/*" capture="environment" (change)="onFileSelected($event)">
+      <input #fileInputDocs type="file" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,audio/*" (change)="onFileSelected($event)">
 
-          <!-- Attach popup menu -->
-          <div class="attach-menu" *ngIf="showAttachMenu">
-            <button class="attach-menu-item" (click)="pickFile('images')">
-              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd"/></svg>
-              <span>Photos & Videos</span>
-            </button>
-            <button class="attach-menu-item" (click)="pickFile('docs')">
-              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"/></svg>
-              <span>Documents</span>
-            </button>
-            <button class="attach-menu-item" (click)="pickFile('all')">
-              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"/></svg>
-              <span>All Files</span>
-            </button>
-          </div>
-        </div>
-        <div class="input-wrap">
-          <input
-            type="text"
-            [(ngModel)]="messageText"
-            (input)="onTyping()"
-            (keydown)="onKeyDown($event)"
-            placeholder="Type a message..."
-            autocomplete="off"
-          />
-        </div>
-        <button class="send-btn" (click)="sendMessage()" [disabled]="!messageText.trim()">
-          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/></svg>
+      <div class="composer-leading">
+        <button class="icon-btn" (click)="toggleAttachMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 1 1 5.65 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.82l8.48-8.49"/></svg>
         </button>
+        <div class="attach-menu" *ngIf="showAttachMenu">
+          <button type="button" (click)="pickFile('camera')">📸 Camera</button>
+          <button type="button" (click)="pickFile('gallery')">🖼️ Gallery</button>
+          <button type="button" (click)="pickFile('docs')">📎 Documents</button>
+          <button type="button" (click)="shareLocation()">📍 Location</button>
+          <button type="button" (click)="openShareContactSheet()">👤 Contact</button>
+        </div>
       </div>
 
-      <!-- Upload Progress Bar -->
-      <div class="upload-progress-bar" *ngIf="uploadingFile">
-        <div class="upload-progress-fill" [style.width.%]="uploadProgress"></div>
-        <span class="upload-progress-text">Uploading {{ uploadProgress }}%</span>
+      <div class="composer-input-wrap">
+        <button class="emoji-btn" (click)="toggleEmojiPicker()">😊</button>
+        <input
+          [(ngModel)]="messageText"
+          (input)="onTyping()"
+          (keydown)="onKeyDown($event)"
+          placeholder="Write a message"
+        >
+        <div class="emoji-panel" *ngIf="showEmojiPicker">
+          <button *ngFor="let emoji of quickEmojis" type="button" (click)="addEmoji(emoji)">{{ emoji }}</button>
+        </div>
       </div>
-    </ng-container>
+
+      <button class="record-btn" [class.recording]="isRecording" (click)="toggleVoiceRecording()">
+        {{ isRecording ? formatDuration(recordingSeconds) : '🎙️' }}
+      </button>
+      <button class="send-btn" (click)="sendMessage()" [disabled]="!messageText.trim() && !editingMessageId">Send</button>
+    </footer>
+
+    <div class="upload-strip" *ngIf="uploadingFile">
+      <div class="upload-fill" [style.width.%]="uploadProgress"></div>
+      <span>Uploading {{ uploadProgress }}%</span>
+    </div>
   </main>
+
+  <ng-template #emptyPane>
+    <main class="empty-pane">
+      <div class="empty-state large">
+        <h2>Welcome to ChitChat</h2>
+        <p>Select a conversation from the sidebar to continue.</p>
+      </div>
+    </main>
+  </ng-template>
+
+  <div class="sheet-backdrop" *ngIf="showSettingsPanel || showChatInfoPanel || showForwardSheet || showShareContactSheet || showMessageActions" (click)="showSettingsPanel = false; showChatInfoPanel = false; showForwardSheet = false; showShareContactSheet = false; showMessageActions = false"></div>
+
+  <section class="side-sheet" *ngIf="showSettingsPanel">
+    <div class="sheet-header">
+      <div>
+        <h3>Account Settings</h3>
+        <p>Manage your profile, appearances, and privacy preferences.</p>
+      </div>
+      <button class="icon-btn" (click)="showSettingsPanel = false">✕</button>
+    </div>
+    <div class="sheet-body form-grid">
+      <label>
+        <span>Avatar</span>
+        <div class="profile-uploader">
+          <div class="avatar-block large" [class.has-image]="!!profileDraft.avatar">
+            <img *ngIf="profileDraft.avatar" [src]="profileDraft.avatar" alt="Avatar preview">
+            <span *ngIf="!profileDraft.avatar">{{ getUserInitial(profileDraft.username || 'U') }}</span>
+          </div>
+          <div class="profile-upload-actions">
+            <button class="ghost-btn" type="button" (click)="triggerAvatarInput()">Upload image</button>
+            <input [(ngModel)]="profileDraft.avatar" placeholder="Or paste image URL">
+          </div>
+        </div>
+      </label>
+      <label>
+        <span>Username</span>
+        <input [(ngModel)]="profileDraft.username">
+      </label>
+      <label>
+        <span>Bio / status</span>
+        <textarea rows="3" [(ngModel)]="profileDraft.bio"></textarea>
+      </label>
+      <label>
+        <span>Wallpaper URL</span>
+        <input [(ngModel)]="profileDraft.wallpaper" placeholder="Optional custom chat wallpaper">
+      </label>
+      <label>
+        <span>Theme</span>
+        <div class="segmented">
+          <button type="button" [class.active]="profileDraft.theme === 'dark'" (click)="applyTheme('dark')">Dark</button>
+          <button type="button" [class.active]="profileDraft.theme === 'light'" (click)="applyTheme('light')">Light</button>
+        </div>
+      </label>
+      <label>
+        <span>Last seen visibility</span>
+        <select [(ngModel)]="profileDraft.privacy.lastSeen">
+          <option value="everyone">Everyone</option>
+          <option value="contacts">Contacts</option>
+          <option value="nobody">Nobody</option>
+        </select>
+      </label>
+      <label>
+        <span>Profile photo visibility</span>
+        <select [(ngModel)]="profileDraft.privacy.profilePhoto">
+          <option value="everyone">Everyone</option>
+          <option value="contacts">Contacts</option>
+          <option value="nobody">Nobody</option>
+        </select>
+      </label>
+      <label>
+        <span>Online status visibility</span>
+        <select [(ngModel)]="profileDraft.privacy.onlineStatus">
+          <option value="everyone">Everyone</option>
+          <option value="contacts">Contacts</option>
+          <option value="nobody">Nobody</option>
+        </select>
+      </label>
+    </div>
+    <div class="sheet-footer">
+      <button class="ghost-btn" (click)="logout()">Log out</button>
+      <button class="send-btn" (click)="saveProfile()">Save changes</button>
+    </div>
+  </section>
+
+  <section class="side-sheet info" *ngIf="showChatInfoPanel && selectedUser">
+    <div class="sheet-header">
+      <div>
+        <h3>{{ selectedUser.username }}</h3>
+        <p>{{ selectedUser.bio || 'No status yet' }}</p>
+      </div>
+      <button class="icon-btn" (click)="showChatInfoPanel = false">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="info-grid">
+        <button class="ghost-btn" (click)="toggleChatPreference(selectedUser, 'isPinned')">{{ selectedUser.isPinned ? 'Unpin chat' : 'Pin chat' }}</button>
+        <button class="ghost-btn" (click)="toggleChatPreference(selectedUser, 'isMuted')">{{ selectedUser.isMuted ? 'Unmute chat' : 'Mute chat' }}</button>
+        <button class="ghost-btn" (click)="toggleChatPreference(selectedUser, 'isArchived')">{{ selectedUser.isArchived ? 'Move to inbox' : 'Archive chat' }}</button>
+      </div>
+
+      <div class="info-section">
+        <h4>Shared media</h4>
+        <div class="media-grid">
+          <a *ngFor="let media of getSharedMedia()" [href]="getFileUrl(media.fileUrl)" target="_blank" class="media-tile">
+            <img *ngIf="media.type === 'image'" [src]="getFileUrl(media.fileUrl)" [alt]="media.fileName || 'Media'">
+            <video *ngIf="media.type === 'video'" [src]="getFileUrl(media.fileUrl)"></video>
+            <span *ngIf="media.type === 'audio'">🎙️ {{ formatDuration(media.duration) }}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <h4>Shared files & cards</h4>
+        <div class="info-list">
+          <div *ngFor="let item of getSharedFiles()" class="info-list-item">
+            <strong>{{ formatPreview(item) }}</strong>
+            <span>{{ formatTime(item.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bottom-sheet" *ngIf="showMessageActions && activeMessage">
+    <div class="sheet-header compact">
+      <div>
+        <h3>Message actions</h3>
+        <p>{{ formatPreview(activeMessage) }}</p>
+      </div>
+      <button class="icon-btn" (click)="showMessageActions = false">✕</button>
+    </div>
+    <div class="action-grid">
+      <button type="button" (click)="replyToMessage(activeMessage)">Reply</button>
+      <button type="button" (click)="openForwardSheet(activeMessage)">Forward</button>
+      <button type="button" (click)="copyMessage(activeMessage)" [disabled]="!activeMessage.content">Copy</button>
+      <button type="button" (click)="togglePinMessage(activeMessage)">{{ activeMessage.pinned ? 'Unpin' : 'Pin' }}</button>
+      <button type="button" (click)="editMessage(activeMessage)" [disabled]="!canEditMessage(activeMessage)">Edit</button>
+      <button type="button" class="danger" (click)="deleteMessage(activeMessage)">Delete</button>
+    </div>
+  </section>
+
+  <section class="bottom-sheet" *ngIf="showForwardSheet">
+    <div class="sheet-header compact">
+      <div>
+        <h3>Forward message</h3>
+        <p>Select a chat to forward into</p>
+      </div>
+      <button class="icon-btn" (click)="showForwardSheet = false">✕</button>
+    </div>
+    <div class="sheet-scroll-list">
+      <button *ngFor="let user of contacts" type="button" class="sheet-list-item" (click)="forwardMessageTo(user)">
+        <div class="avatar-block" [class.has-image]="!!user.avatar">
+          <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.username">
+          <span *ngIf="!user.avatar">{{ getUserInitial(user.username) }}</span>
+        </div>
+        <div>
+          <strong>{{ user.username }}</strong>
+          <span>{{ user.lastMessagePreview || user.bio }}</span>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <section class="bottom-sheet" *ngIf="showShareContactSheet">
+    <div class="sheet-header compact">
+      <div>
+        <h3>Share contact</h3>
+        <p>Send a contact card into this conversation</p>
+      </div>
+      <button class="icon-btn" (click)="showShareContactSheet = false">✕</button>
+    </div>
+    <div class="sheet-scroll-list">
+      <button *ngFor="let user of contacts" type="button" class="sheet-list-item" (click)="shareContact(user)">
+        <div class="avatar-block" [class.has-image]="!!user.avatar">
+          <img *ngIf="user.avatar" [src]="user.avatar" [alt]="user.username">
+          <span *ngIf="!user.avatar">{{ getUserInitial(user.username) }}</span>
+        </div>
+        <div>
+          <strong>{{ user.username }}</strong>
+          <span>{{ user.bio || 'No bio yet' }}</span>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <div class="toast" *ngIf="toastMessage">{{ toastMessage }}</div>
 </div>

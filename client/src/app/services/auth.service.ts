@@ -51,6 +51,17 @@ export class AuthService {
     );
   }
 
+  updateStoredUser(user: User): void {
+    localStorage.setItem(this.userKey, JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  refreshProfile(): Observable<{ user: User }> {
+    return this.http.get<{ user: User }>(`${environment.apiUrl}/auth/me`).pipe(
+      tap(res => this.updateStoredUser(res.user))
+    );
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
@@ -59,7 +70,6 @@ export class AuthService {
 
   private handleAuth(res: AuthResponse): void {
     localStorage.setItem(this.tokenKey, res.token);
-    localStorage.setItem(this.userKey, JSON.stringify(res.user));
-    this.currentUserSubject.next(res.user);
+    this.updateStoredUser(res.user);
   }
 }

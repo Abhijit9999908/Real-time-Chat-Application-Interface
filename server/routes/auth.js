@@ -4,7 +4,12 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-// Register
+function signFor(user) {
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN
+  });
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -23,21 +28,7 @@ router.post('/register', async (req, res) => {
     }
 
     const user = await User.create({ username, email, password });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN
-    });
-
-    res.status(201).json({
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-        status: user.status
-      }
-    });
+    res.status(201).json({ token: signFor(user), user: user.toJSON() });
   } catch (err) {
     if (err.code === 11000) {
       return res.status(409).json({ message: 'Account already exists.' });
@@ -46,7 +37,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -56,7 +46,6 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await User.findOne({ email }).select('+password');
-
     if (!user) {
       return res.status(401).json({ message: 'No account found with this email.' });
     }
@@ -65,32 +54,17 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Incorrect password.' });
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN
-    });
-
-    // Update status to online
     user.status = 'online';
     await user.save();
 
-    res.json({
-      token,
-      user: {
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        avatar: user.avatar,
-        status: 'online'
-      }
-    });
+    res.json({ token: signFor(user), user: user.toJSON() });
   } catch (err) {
     res.status(500).json({ message: 'Something went wrong. Please try again.' });
   }
 });
 
-// Get current user
 router.get('/me', require('../middleware/auth'), async (req, res) => {
-  res.json({ user: req.user });
+  res.json({ user: req.user.toJSON() });
 });
 
 module.exports = router;

@@ -14,7 +14,8 @@ export const routes: Routes = [
   },
   {
     path: 'chat',
-    loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent)
+    loadComponent: () => import('./pages/chat/chat.component').then(m => m.ChatComponent),
+    canActivate: [authGuard]
   },
   { path: '', redirectTo: '/chat', pathMatch: 'full' },
   { path: '**', redirectTo: '/chat' }

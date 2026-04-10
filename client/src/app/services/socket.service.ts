@@ -1,9 +1,9 @@
 import { Injectable, NgZone } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth.service';
-import { Message } from '../models/interfaces';
+import { Message, SharedContact, SharedLocation } from '../models/interfaces';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
@@ -14,6 +14,8 @@ export class SocketService {
   private stoppedTypingSubject = new BehaviorSubject<string | null>(null);
   private userStatusSubject = new BehaviorSubject<{ userId: string; status: string; lastSeen: string | null } | null>(null);
   private messagesReadSubject = new BehaviorSubject<string | null>(null);
+  private messageUpdatedSubject = new BehaviorSubject<Message | null>(null);
+  private messageDeliveredSubject = new BehaviorSubject<{ messageId: string; deliveredAt: string | null } | null>(null);
   private connectionStateSubject = new BehaviorSubject<'connected' | 'disconnected' | 'reconnecting'>('disconnected');
 
   private heartbeatInterval: any = null;
@@ -24,6 +26,8 @@ export class SocketService {
   stoppedTyping$ = this.stoppedTypingSubject.asObservable();
   userStatus$ = this.userStatusSubject.asObservable();
   messagesRead$ = this.messagesReadSubject.asObservable();
+  messageUpdated$ = this.messageUpdatedSubject.asObservable();
+  messageDelivered$ = this.messageDeliveredSubject.asObservable();
   connectionState$ = this.connectionStateSubject.asObservable();
 
   constructor(private authService: AuthService, private ngZone: NgZone) {}
@@ -45,57 +49,23 @@ export class SocketService {
 
     this.socket.on('connect', () => {
       this.ngZone.run(() => {
-        console.log('✓ Socket connected');
         this.connectionStateSubject.next('connected');
         this.startHeartbeat();
       });
     });
 
-    this.socket.on('onlineUsers', (users: string[]) => {
-      this.ngZone.run(() => {
-        this.onlineUsersSubject.next(users);
-      });
-    });
-
-    this.socket.on('newMessage', (message: Message) => {
-      this.ngZone.run(() => {
-        this.newMessageSubject.next(message);
-      });
-    });
-
-    this.socket.on('messageSent', (message: Message) => {
-      this.ngZone.run(() => {
-        this.newMessageSubject.next(message);
-      });
-    });
-
-    this.socket.on('userTyping', (data: { userId: string; username: string }) => {
-      this.ngZone.run(() => {
-        this.typingSubject.next(data);
-      });
-    });
-
-    this.socket.on('userStoppedTyping', (data: { userId: string }) => {
-      this.ngZone.run(() => {
-        this.stoppedTypingSubject.next(data.userId);
-      });
-    });
-
-    this.socket.on('userStatusChanged', (data: { userId: string; status: string; lastSeen: string | null }) => {
-      this.ngZone.run(() => {
-        this.userStatusSubject.next(data);
-      });
-    });
-
-    this.socket.on('messagesRead', (data: { readBy: string }) => {
-      this.ngZone.run(() => {
-        this.messagesReadSubject.next(data.readBy);
-      });
-    });
+    this.socket.on('onlineUsers', (users: string[]) => this.ngZone.run(() => this.onlineUsersSubject.next(users)));
+    this.socket.on('newMessage', (message: Message) => this.ngZone.run(() => this.newMessageSubject.next(message)));
+    this.socket.on('messageSent', (message: Message) => this.ngZone.run(() => this.newMessageSubject.next(message)));
+    this.socket.on('userTyping', (data: { userId: string; username: string }) => this.ngZone.run(() => this.typingSubject.next(data)));
+    this.socket.on('userStoppedTyping', (data: { userId: string }) => this.ngZone.run(() => this.stoppedTypingSubject.next(data.userId)));
+    this.socket.on('userStatusChanged', (data: { userId: string; status: string; lastSeen: string | null }) => this.ngZone.run(() => this.userStatusSubject.next(data)));
+    this.socket.on('messagesRead', (data: { readBy: string }) => this.ngZone.run(() => this.messagesReadSubject.next(data.readBy)));
+    this.socket.on('messageUpdated', (message: Message) => this.ngZone.run(() => this.messageUpdatedSubject.next(message)));
+    this.socket.on('messageDelivered', (data: { messageId: string; deliveredAt: string | null }) => this.ngZone.run(() => this.messageDeliveredSubject.next(data)));
 
     this.socket.on('disconnect', () => {
       this.ngZone.run(() => {
-        console.log('✗ Socket disconnected');
         this.connectionStateSubject.next('disconnected');
         this.stopHeartbeat();
       });
@@ -138,8 +108,29 @@ export class SocketService {
     fileName?: string;
     fileUrl?: string;
     fileSize?: number;
+    mimeType?: string;
+    duration?: number;
+    location?: SharedLocation | null;
+    sharedContact?: SharedContact | null;
+    replyToId?: string | null;
   }): void {
     this.socket?.emit('sendMessage', data);
+  }
+
+  editMessage(messageId: string, content: string, callback?: (result: { success: boolean; error?: string }) => void): void {
+    this.socket?.emit('editMessage', { messageId, content }, callback);
+  }
+
+  deleteMessage(messageId: string, callback?: (result: { success: boolean; error?: string }) => void): void {
+    this.socket?.emit('deleteMessage', { messageId }, callback);
+  }
+
+  toggleReaction(messageId: string, emoji: string, callback?: (result: { success: boolean; error?: string }) => void): void {
+    this.socket?.emit('toggleReaction', { messageId, emoji }, callback);
+  }
+
+  togglePinMessage(messageId: string, callback?: (result: { success: boolean; error?: string }) => void): void {
+    this.socket?.emit('togglePinMessage', { messageId }, callback);
   }
 
   emitTyping(receiverId: string): void {
